@@ -1,2 +1,2 @@
-# urbit
+# Urbit
 Assorted Urbit code
