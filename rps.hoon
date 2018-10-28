@@ -46,44 +46,47 @@
        (init p.a)
      %resp
        (resp p.a)
-  ==
-++  poke-atom                        :: Basically using this as a state machine
-  |=  atm=@
-  ^-    [(list move) _+>.$]
-  ?:  =(atm 4)                       :: Received an init request
+  ==                                         :: Basically using this as a state machine
+++  poke-atom                                :: Atom codes:     4 - received init request
+  |=  atm=@                                  ::             0,1,2 - replied with R,P,S
+  ^-    [(list move) _+>.$]                  ::             5,6,7 - drew, won, loss
+  ?:  =(atm 4)
       ~&  'Someone wants to play Rock, Paper, Scissors..!'
       ~&  'Use :rsp [%show ~] to see who it is.'
       ~&  'Reply with... :rsp [%resp ~ship ~hand ~]'
-  [~ +>.$(inbx.game (weld inbx.game ~[src.bow]))]
-  ?:  (lth atm 3)
-     =+  cde=(calc-game atm)         :: Initiator calculates game result
-     ?:  =(cde 11)                   :: Sends result code to opponent.
-          ~&  'Result from your match with...'
-          ~&  src.bow
-          ~&  '...You Drew!'
-          (msg cde)
-     ?:  =(cde 12)
-          ~&  'Result from your match with...'
-          ~&  src.bow
-          ~&  '...You Won!'
-          (msg cde)
-     ?:  =(cde 13)
-          ~&  'Result from your match with...'
-          ~&  src.bow
-          ~&  '...You Lost!'
-          (msg cde)
-         [~ +>.$]
-  ?:  =(atm 11)                      :: Only recipients will get here.
+  ?~  (find ~[src.bow] inbx.game)
+      [~ +>.$(inbx.game (weld inbx.game ~[src.bow]))]
+  ~&  'Already in inbox...'
+      [~ +>.$]
+  ?:  (lth atm 3)                            :: Initiator recieves opponents hand
+  =+  cde=(calc-game atm)                    :: Calculates game result
+  ?:  =(cde 5)                               :: Sends result code to opponent
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  '...You Drew!'
+       (msg cde)
+  ?:  =(cde 6)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  '...You Won!'
+       (msg cde)
+  ?:  =(cde 7)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  '...You Lost!'
+       (msg cde)
+       [~ +>.$]
+  ?:  =(atm 5)                               :: Only recipients will get here.
       ~&  'Result from your match with...'
       ~&  src.bow
       ~&  '...You Drew!'
       [~ +>.$]
-  ?:  =(atm 12)
+  ?:  =(atm 6)
       ~&  'Result from your match with...'
       ~&  src.bow
       ~&  '...You Lost!'
       [~ +>.$]
-  ?:  =(atm 13)
+  ?:  =(atm 7)
       ~&  'Result from your match with...'
       ~&  src.bow
       ~&  '...You Won!'
@@ -92,9 +95,6 @@
 ++  coup
   |=  a=*
   ^-  [(list move) _+>.$]
- :: ?~  (find ~[src.bow] inbx.game)
- :: [~ +>.$(inbx.game (weld inbx.game ~[src.bow]))]
- :: ~&  'Already in inbox...'
   [~ +>.$]
 ++  hand-to-atom
    |=  hnd=hand
@@ -120,7 +120,7 @@
            [[-.shd %rps] [%atom 4]]
       ==
   ==
-  ~&  'A - You already sent that ship a request!'
+  ~&  'You already sent that ship a request!'
   [~ +>.$]
 ++  resp
    |=  shd=shad
@@ -152,19 +152,19 @@
     |=  opp=@
     ^-  @
     =+  you=(~(got by outx.game) src.bow)
-    ?:  =(opp you)                      :: 11 - draw
-        11                              :: 12 - win
-    ?:  =(opp 0)                        :: 13 - lose
+    ?:  =(opp you)                           :: 5 - draw
+        5                                    :: 6 - win
+    ?:  =(opp 0)                             :: 7 - lose
         ?:  =(you 1)
-            12
-            13                          :: these can definitely
-    ?:  =(opp 1)                        :: be condensed
-        ?:  =(you 0)                    :: with a (gth )
-            13
-            12
+            6
+            7                                :: these can definitely
+    ?:  =(opp 1)                             :: be condensed
+        ?:  =(you 0)                         :: with a (gth )
+            6
+            7
     ?:  =(opp 2)
         ?:  =(you 0)
-            12
-            13
+            6
+            7
     99
 --
