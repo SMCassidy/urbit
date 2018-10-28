@@ -49,7 +49,7 @@
   ==                                         :: Basically using this as a state machine
 ++  poke-atom                                :: Atom codes:     4 - received init request
   |=  atm=@                                  ::             0,1,2 - replied with R,P,S
-  ^-    [(list move) _+>.$]                  ::             5,6,7 - drew, won, loss
+  ^-    [(list move) _+>.$]
   ?:  =(atm 4)
       ~&  'Someone wants to play Rock, Paper, Scissors..!'
       ~&  'Use :rsp [%show ~] to see who it is.'
@@ -59,24 +59,11 @@
   ~&  'Already in inbox...'
       [~ +>.$]
   ?:  (lth atm 3)                            :: Initiator recieves opponents hand
-  =+  cde=(calc-game atm)                    :: Calculates game result
-  ?:  =(cde 5)                               :: Sends result code to opponent
-       ~&  'Result from your match with...'
-       ~&  src.bow
-       ~&  '...You Drew!'
-       (msg cde)
-  ?:  =(cde 6)
-       ~&  'Result from your match with...'
-       ~&  src.bow
-       ~&  '...You Won!'
-       (msg cde)
-  ?:  =(cde 7)
-       ~&  'Result from your match with...'
-       ~&  src.bow
-       ~&  '...You Lost!'
-       (msg cde)
-       [~ +>.$]
-  ?:  =(atm 5)                               :: Only recipients will get here.
+  =+  you=(~(got by outx.game) src.bow)
+  =+  hero=(calc-game [you atm])             :: Calculates game result
+  =+  vill=(code-translate hero)
+  (msg [hero vill])                          :: Send result to players
+  ?:  =(atm 5)
       ~&  'Result from your match with...'
       ~&  src.bow
       ~&  '...You Drew!'
@@ -91,21 +78,56 @@
       ~&  src.bow
       ~&  '...You Won!'
       [~ +>.$]
+  ?:  =(atm 10)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'You both picked Rock! You Drew!'
+      [~ +>.$]
+  ?:  =(atm 11)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'Their Paper beat your Rock! You Lost!'
+      [~ +>.$]
+  ?:  =(atm 12)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'Your Rock beat their Scissors! You won!'
+      [~ +>.$]
+  ?:  =(atm 13)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'Your Paper beat their Rock! You won!'
+      [~ +>.$]
+  ?:  =(atm 14)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'You both picked Paper! You Drew!'
+      [~ +>.$]
+  ?:  =(atm 15)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'Their Scissors beat your Paper! You Lost!'
+      [~ +>.$]
+  ?:  =(atm 16)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'Their Rock beat your Scissors! You Lost!'
+      [~ +>.$]
+  ?:  =(atm 17)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'Your Scissors beat their Paper! You Won!'
+      [~ +>.$]
+  ?:  =(atm 18)
+      ~&  'Result from your match with...'
+      ~&  src.bow
+      ~&  'You both picked Scissors! You Drew!'
+      [~ +>.$]
   [~ +>.$]
 ++  coup
   |=  a=*
   ^-  [(list move) _+>.$]
   [~ +>.$]
-++  hand-to-atom
-   |=  hnd=hand
-   ^-  @
-   ?:  =(hnd [%rock ~])
-     0
-   ?:  =(hnd [%paper ~])
-     1
-   ?:  =(hnd [%scissors ~])
-     2
-   99
 ++  init
    |=  shd=shad
    ^-  [(list move) _+>.$]
@@ -139,32 +161,70 @@
        ==
    ==
 ++  msg
-    |=  cde=@
+    |=  codes=[a=@ b=@]
     ^-  [(list move) _+>.$]
     :_  +>.$(outx.game (~(del by outx.game) src.bow))
     :~  :*  ost.bow
             %poke
             /msg
-            [[src.bow %rps] [%atom cde]]
+            [[src.bow %rps] [%atom b.codes]]
+        ==
+        :*  ost.bow
+            %poke
+            /msg
+            [[our.bow %rps] [%atom a.codes]]
         ==
     ==
+++  hand-to-atom
+   |=  hnd=hand
+   ^-  @
+   ?:  =(hnd [%rock ~])
+     0
+   ?:  =(hnd [%paper ~])
+     1
+   ?:  =(hnd [%scissors ~])
+     2
+   99
 ++  calc-game
-    |=  opp=@
-    ^-  @
-    =+  you=(~(got by outx.game) src.bow)
-    ?:  =(opp you)                           :: 5 - draw
-        5                                    :: 6 - win
-    ?:  =(opp 0)                             :: 7 - lose
-        ?:  =(you 1)
-            6
-            7                                :: these can definitely
-    ?:  =(opp 1)                             :: be condensed
-        ?:  =(you 0)                         :: with a (gth )
-            6
-            7
-    ?:  =(opp 2)
-        ?:  =(you 0)
-            6
-            7
-    99
+   |=  [a=@ b=@]
+   ^-  @                                     :::::::::::::::::::::::::::
+   ?:  =(a 0)                                :: You      Opp     Atom ::
+   ?:  =(b 0)                                :::::::::::::::::::::::::::
+     10                                      :: Rock     Rock      10 ::
+   ?:  =(b 1)                                :: Rock     Paper     11 ::
+     11                                      :: Rock     Scissors  12 ::
+     12                                      :: Paper    Rock      13 ::
+   ?:  =(a 1)                                :: Paper    Paper     14 ::
+   ?:  =(b 0)                                :: Paper    Scissors  15 ::
+     13                                      :: Scissors Rock      16 ::
+   ?:  =(b 1)                                :: Scissors Paper     17 ::
+     14                                      :: Scissors Scissors  18 ::
+     15                                      :::::::::::::::::::::::::::
+   ?:  =(b 0)
+     16
+   ?:  =(b 1)
+     17
+     18
+++  code-translate                           :: Have to flip code
+   |=  a=@                                   :: before sending to opponent
+   ^-  @
+   ?:  =(a 10)
+     10
+   ?:  =(a 11)
+     13
+   ?:  =(a 12)
+     16
+   ?:  =(a 13)
+     11
+   ?:  =(a 14)
+     14
+   ?:  =(a 15)
+     17
+   ?:  =(a 16)
+     12
+   ?:  =(a 17)
+     15
+   ?:  =(a 18)
+     18
+   99
 --
