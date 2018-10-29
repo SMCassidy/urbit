@@ -62,68 +62,9 @@
   =+  you=(~(got by outx.game) src.bow)
   =+  hero=(calc-game [you atm])             :: Calculates game result
   =+  vill=(code-translate hero)
-  (msg [hero vill])                          :: Send result to players
-  ?:  =(atm 5)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  '...You Drew!'
-      [~ +>.$]
-  ?:  =(atm 6)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  '...You Lost!'
-      [~ +>.$]
-  ?:  =(atm 7)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  '...You Won!'
-      [~ +>.$]
-  ?:  =(atm 10)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'You both picked Rock! You Drew!'
-      [~ +>.$]
-  ?:  =(atm 11)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'Their Paper beat your Rock! You Lost!'
-      [~ +>.$]
-  ?:  =(atm 12)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'Your Rock beat their Scissors! You won!'
-      [~ +>.$]
-  ?:  =(atm 13)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'Your Paper beat their Rock! You won!'
-      [~ +>.$]
-  ?:  =(atm 14)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'You both picked Paper! You Drew!'
-      [~ +>.$]
-  ?:  =(atm 15)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'Their Scissors beat your Paper! You Lost!'
-      [~ +>.$]
-  ?:  =(atm 16)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'Their Rock beat your Scissors! You Lost!'
-      [~ +>.$]
-  ?:  =(atm 17)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'Your Scissors beat their Paper! You Won!'
-      [~ +>.$]
-  ?:  =(atm 18)
-      ~&  'Result from your match with...'
-      ~&  src.bow
-      ~&  'You both picked Scissors! You Drew!'
-      [~ +>.$]
-  [~ +>.$]
+   (announce-game [hero vill])
+   (announce-game [atm 99])                          :: Send result to players
+  ::[~ +>.$]
 ++  coup
   |=  a=*
   ^-  [(list move) _+>.$]
@@ -161,18 +102,15 @@
        ==
    ==
 ++  msg
-    |=  codes=[a=@ b=@]
+    |=  cde=@
     ^-  [(list move) _+>.$]
+    ?:  =(cde 99)
+        [~ +>.$]
     :_  +>.$(outx.game (~(del by outx.game) src.bow))
     :~  :*  ost.bow
             %poke
             /msg
-            [[src.bow %rps] [%atom b.codes]]
-        ==
-        :*  ost.bow
-            %poke
-            /msg
-            [[our.bow %rps] [%atom a.codes]]
+            [[src.bow %rps] [%atom cde]]
         ==
     ==
 ++  hand-to-atom
@@ -227,4 +165,53 @@
    ?:  =(a 18)
      18
    99
+++  announce-game
+   |=  a=[h=@ v=@]
+   ^-  [(list move) _+>.$]
+   ?:  =(h.a 10)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'You both picked Rock! You Drew!'
+         (msg v.a)
+   ?:  =(h.a 11)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'Their Paper beat your Rock! You Lost!'
+         (msg v.a)
+   ?:  =(h.a 12)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'Your Rock beat their Scissors! You won!'
+         (msg v.a)
+   ?:   =(h.a 13)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'Your Paper beat their Rock! You won!'
+         (msg v.a)
+   ?:  =(h.a 14)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'You both picked Paper! You Drew!'
+         (msg v.a)
+   ?:  =(h.a 15)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'Their Scissors beat your Paper! You Lost!'
+         (msg v.a)
+   ?:  =(h.a 16)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'Their Rock beat your Scissors! You Lost!'
+         (msg v.a)
+   ?:  =(h.a 17)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'Your Scissors beat their Paper! You Won!'
+         (msg v.a)
+   ?:  =(h.a 18)
+       ~&  'Result from your match with...'
+       ~&  src.bow
+       ~&  'You both picked Scissors! You Drew!'
+         (msg v.a)
+   [~ +>.$]
 --
